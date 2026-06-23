@@ -371,7 +371,10 @@
       <div class="bg-white rounded-xl shadow-sm overflow-hidden">
         <div class="p-4 border-b flex justify-between items-center">
           <h2 class="font-bold text-gray-800">Detail Transaksi Pekan Ini</h2>
-          <button onclick="exportFridayPDF()" class="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded-lg font-medium hover:bg-red-100">Export PDF</button>
+          <button onclick="exportFridayPDF()" class="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded-lg font-medium hover:bg-red-100 flex items-center gap-1">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            Export PDF
+          </button>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-sm text-left">
@@ -401,20 +404,55 @@
     <div id="page-settings" class="page-content hidden max-w-2xl mx-auto space-y-6 fade-in">
       <h1 class="text-2xl font-bold text-gray-800">Pengaturan Masjid</h1>
       
-      <div class="bg-white rounded-xl shadow-sm p-6">
-        <form onsubmit="saveSettings(event)" class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Nama Masjid</label>
-            <input type="text" id="settingMosqueName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" required>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Alamat Lengkap</label>
-            <textarea id="settingMosqueAddress" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" required></textarea>
-          </div>
-          <button type="submit" class="w-full md:w-auto px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition shadow-md">
-            Simpan Perubahan
-          </button>
-        </form>
+      <div class="bg-white rounded-xl shadow-sm p-6 space-y-6">
+        <!-- Info Masjid -->
+        <div>
+          <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2 border-b pb-2">
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+            Informasi Masjid
+          </h2>
+          <form onsubmit="saveSettings(event)" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Nama Masjid</label>
+              <input type="text" id="settingMosqueName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" required>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Alamat Lengkap</label>
+              <textarea id="settingMosqueAddress" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" required></textarea>
+            </div>
+            <button type="submit" class="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition shadow-md">
+              Simpan Perubahan
+            </button>
+          </form>
+        </div>
+
+        <!-- Info Laporan PDF -->
+        <div>
+          <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2 border-b pb-2">
+            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Pengaturan Cetak PDF
+          </h2>
+          <form onsubmit="saveReportSettings(event)" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Kota / Lokasi Cetak</label>
+              <input type="text" id="settingCity" placeholder="Contoh: Jakarta" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" required>
+              <p class="text-xs text-gray-500 mt-1">Akan muncul di teks: "Dibuat di [Kota], [Tanggal]"</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Ketua Takmir</label>
+                <input type="text" id="settingKetua" placeholder="Nama Lengkap" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" required>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Bendahara</label>
+                <input type="text" id="settingBendahara" placeholder="Nama Lengkap" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" required>
+              </div>
+            </div>
+            <button type="submit" class="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition shadow-md">
+              Simpan Pengaturan PDF
+            </button>
+          </form>
+        </div>
       </div>
       
       <div class="bg-gradient-to-r from-green-800 to-green-900 text-white rounded-xl p-6 shadow-lg">
@@ -578,7 +616,13 @@
     
     let transactions = [];
     let categories = [];
-    let settings = { mosque_name: 'Masjid Al-Ikhlas', mosque_address: 'Jl. Masjid Raya No. 1' };
+    let settings = { 
+      mosque_name: 'Masjid Al-Ikhlas', 
+      mosque_address: 'Jl. Masjid Raya No. 1',
+      city: 'Jakarta',
+      ketua: 'H. Abdullah',
+      bendahara: 'Umar Bakri'
+    };
     let currentFriday = new Date();
     let chartInstances = {};
 
@@ -606,7 +650,7 @@
         const s = localStorage.getItem(STORAGE.settings);
         if (t) transactions = JSON.parse(t);
         if (c) categories = JSON.parse(c); else { categories = [...DEFAULT_CATS]; saveCats(); }
-        if (s) settings = JSON.parse(s);
+        if (s) settings = { ...settings, ...JSON.parse(s) }; // Merge to keep defaults if old data
       } catch(e) { console.error(e); }
     }
     
@@ -1245,6 +1289,76 @@
 
     // ==================== EXPORT FUNCTIONS ====================
     
+    // Helper to generate PDF content structure
+    function generatePDFContent(doc, title, periodLabel, financials, tableData, isFriday = false) {
+      // Header
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'bold');
+      doc.text(settings.mosque_name.toUpperCase(), 105, 15, { align: 'center' });
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      doc.text(settings.mosque_address, 105, 22, { align: 'center' });
+      doc.line(14, 26, 196, 26);
+      
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text(title, 105, 35, { align: 'center' });
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      doc.text(`Periode: ${periodLabel}`, 105, 42, { align: 'center' });
+      
+      // Summary Box
+      doc.setFillColor(240, 253, 244);
+      doc.rect(14, 50, 182, 30, 'F');
+      doc.setFontSize(10);
+      doc.text(`1. Saldo Awal       : ${formatRupiah(financials.initialBalanceTotal)}`, 20, 60);
+      doc.text(`2. Total Pemasukan  : ${formatRupiah(financials.income)}`, 20, 68);
+      doc.text(`3. Total Pengeluaran: ${formatRupiah(financials.expense)}`, 20, 76);
+      
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(22, 163, 74);
+      doc.text(`4. SALDO AKHIR      : ${formatRupiah(financials.finalBalance)}`, 20, 84);
+      doc.setTextColor(0, 0, 0);
+      
+      // Table Headers based on type
+      const headers = isFriday 
+        ? [['No', 'Tanggal', 'Keterangan', 'Masuk', 'Keluar']]
+        : [['No', 'Tanggal', 'Keterangan', 'Dana/Akad', 'Catatan', 'Masuk', 'Keluar']];
+        
+      const colStyles = isFriday
+        ? { 0: {cellWidth: 10}, 1: {cellWidth: 25}, 2: {cellWidth: 80}, 3: {cellWidth: 35}, 4: {cellWidth: 35} }
+        : { 0: {cellWidth: 10}, 1: {cellWidth: 20}, 2: {cellWidth: 45}, 3: {cellWidth: 30}, 4: {cellWidth: 30}, 5: {cellWidth: 25}, 6: {cellWidth: 25} };
+
+      doc.autoTable({
+        startY: 90,
+        head: headers,
+        body: tableData,
+        theme: 'grid',
+        headStyles: { fillColor: [22, 163, 74], fontSize: 8 },
+        styles: { fontSize: 8, cellPadding: 2 },
+        columnStyles: colStyles
+      });
+      
+      // Signature Footer
+      const finalY = doc.lastAutoTable.finalY + 20;
+      const pageWidth = doc.internal.pageSize.width;
+      const today = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+      
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      // Use custom city from settings
+      const city = settings.city || 'Kota';
+      doc.text(`Dibuat di ${city}, ${today}`, pageWidth/2, finalY, { align: 'center' });
+      
+      // Ketua Takmir (Left)
+      doc.text('Ketua Takmir,', 30, finalY + 25);
+      doc.text(`( ${settings.ketua || '___________________'} )`, 30, finalY + 45);
+      
+      // Bendahara (Right)
+      doc.text('Bendahara,', pageWidth - 70, finalY + 25);
+      doc.text(`( ${settings.bendahara || '___________________'} )`, pageWidth - 70, finalY + 45);
+    }
+
     function exportPDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
@@ -1259,36 +1373,6 @@
         periodLabel = `${formatDateID(startDate)} - ${formatDateID(endDate)}`;
       }
       
-      // Header
-      doc.setFontSize(16);
-      doc.setFont(undefined, 'bold');
-      doc.text(settings.mosque_name.toUpperCase(), 105, 15, { align: 'center' });
-      doc.setFontSize(10);
-      doc.setFont(undefined, 'normal');
-      doc.text(settings.mosque_address, 105, 22, { align: 'center' });
-      doc.line(14, 26, 196, 26);
-      
-      doc.setFontSize(12);
-      doc.setFont(undefined, 'bold');
-      doc.text('LAPORAN KEUANGAN BULANAN', 105, 35, { align: 'center' });
-      doc.setFontSize(10);
-      doc.setFont(undefined, 'normal');
-      doc.text(`Periode: ${periodLabel}`, 105, 42, { align: 'center' });
-      
-      // Summary Box
-      doc.setFillColor(240, 253, 244);
-      doc.rect(14, 50, 182, 30, 'F');
-      doc.setFontSize(10);
-      doc.text(`1. Saldo Awal Bulan : ${formatRupiah(financials.initialBalanceTotal)}`, 20, 60);
-      doc.text(`2. Total Pemasukan  : ${formatRupiah(financials.income)}`, 20, 68);
-      doc.text(`3. Total Pengeluaran: ${formatRupiah(financials.expense)}`, 20, 76);
-      
-      doc.setFont(undefined, 'bold');
-      doc.setTextColor(22, 163, 74);
-      doc.text(`4. SALDO AKHIR      : ${formatRupiah(financials.finalBalance)}`, 20, 84);
-      doc.setTextColor(0, 0, 0);
-      
-      // Table
       const tableData = data.map((t, i) => {
         const fund = t.fund_source ? categories.find(c => c.id === t.fund_source)?.name : '-';
         return [
@@ -1302,65 +1386,111 @@
         ];
       });
       
-      doc.autoTable({
-        startY: 90,
-        head: [['No', 'Tanggal', 'Keterangan', 'Dana/Akad', 'Catatan', 'Masuk', 'Keluar']],
-        body: tableData,
-        theme: 'grid',
-        headStyles: { fillColor: [22, 163, 74], fontSize: 8 },
-        styles: { fontSize: 8, cellPadding: 2 },
-        columnStyles: {
-          0: {cellWidth: 10}, 1: {cellWidth: 20}, 2: {cellWidth: 45}, 3: {cellWidth: 30}, 4: {cellWidth: 30}, 5: {cellWidth: 25}, 6: {cellWidth: 25}
-        }
-      });
-      
-      // Signature Footer
-      const finalY = doc.lastAutoTable.finalY + 20;
-      const pageWidth = doc.internal.pageSize.width;
-      const today = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-      
-      doc.setFontSize(10);
-      doc.setFont(undefined, 'normal');
-      doc.text(`Dibuat di ${settings.mosque_address.split(',')[1] || 'Kota'}, ${today}`, pageWidth/2, finalY, { align: 'center' });
-      
-      // Ketua Takmir (Left)
-      doc.text('Ketua Takmir,', 30, finalY + 25);
-      doc.text('( ___________________ )', 30, finalY + 45);
-      
-      // Bendahara (Right)
-      doc.text('Bendahara,', pageWidth - 70, finalY + 25);
-      doc.text('( ___________________ )', pageWidth - 70, finalY + 45);
-      
+      generatePDFContent(doc, 'LAPORAN KEUANGAN BULANAN', periodLabel, financials, tableData, false);
       doc.save(`Laporan_${settings.mosque_name}_${new Date().toISOString().split('T')[0]}.pdf`);
+    }
+    
+    function exportFridayPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      const fri = new Date(currentFriday);
+      const thu = new Date(currentFriday);
+      thu.setDate(fri.getDate() + 6);
+      const sStr = fri.toISOString().split('T')[0];
+      const eStr = thu.toISOString().split('T')[0];
+      const periodLabel = `${formatDateID(sStr)} - ${formatDateID(eStr)}`;
+      
+      // Recalculate specifically for this week
+      const prevTrans = transactions.filter(t => t.date < sStr);
+      const initBal = prevTrans.reduce((s, t) => s + (t.type==='income'?t.amount:-t.amount), 0);
+      const weekTrans = transactions.filter(t => t.date >= sStr && t.date <= eStr);
+      const inc = weekTrans.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+      const exp = weekTrans.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+      const final = initBal + inc - exp;
+      
+      const financials = {
+        initialBalanceTotal: initBal,
+        income: inc,
+        expense: exp,
+        finalBalance: final
+      };
+      
+      const tableData = weekTrans.sort((a,b)=>new Date(a.date)-new Date(b.date)).map((t, i) => [
+        i+1,
+        formatDateID(t.date),
+        t.description,
+        t.type === 'income' ? formatRupiah(t.amount) : '-',
+        t.type === 'expense' ? formatRupiah(t.amount) : '-'
+      ]);
+      
+      generatePDFContent(doc, 'LAPORAN PEKAN JUMAT', periodLabel, financials, tableData, true);
+      doc.save(`Laporan_Jumat_${settings.mosque_name}_${sStr}.pdf`);
     }
     
     function exportExcel() {
       const data = getFilteredData();
+      const startDate = document.getElementById('filterStartDate').value;
+      const financials = calculateFinancials(data, startDate || '1900-01-01');
+      
+      let periodLabel = 'Semua Periode';
+      if(startDate && document.getElementById('filterEndDate').value) {
+        periodLabel = `${formatDateID(startDate)} - ${formatDateID(document.getElementById('filterEndDate').value)}`;
+      }
+
       const ws_data = [
-        ["LAPORAN KEUANGAN", settings.mosque_name],
-        ["Periode", document.getElementById('filterPeriod').value],
+        [settings.mosque_name.toUpperCase()],
+        [settings.mosque_address],
         [],
-        ["No", "Tanggal", "Keterangan", "Kategori", "Dana/Akad", "Catatan", "Masuk", "Keluar"]
+        ['LAPORAN KEUANGAN BULANAN'],
+        [`Periode: ${periodLabel}`],
+        [],
+        // Summary Block matching PDF
+        ['RINGKASAN KEUANGAN'],
+        ['1. Saldo Awal Bulan', formatRupiah(financials.initialBalanceTotal)],
+        ['2. Total Pemasukan', formatRupiah(financials.income)],
+        ['3. Total Pengeluaran', formatRupiah(financials.expense)],
+        ['4. SALDO AKHIR', formatRupiah(financials.finalBalance)],
+        [],
+        // Table Header
+        ['No', 'Tanggal', 'Keterangan', 'Dana/Akad', 'Catatan', 'Pemasukan', 'Pengeluaran']
       ];
       
       data.forEach((t, i) => {
-        const cat = categories.find(c => c.id === t.category_id)?.name || '-';
         const fund = t.fund_source ? categories.find(c => c.id === t.fund_source)?.name : '-';
         ws_data.push([
-          i+1, t.date, t.description, cat, fund, t.notes || '',
-          t.type === 'income' ? t.amount : 0,
-          t.type === 'expense' ? t.amount : 0
+          i+1, 
+          t.date, 
+          t.description, 
+          fund, 
+          t.notes || '',
+          t.type === 'income' ? t.amount : '',
+          t.type === 'expense' ? t.amount : ''
         ]);
       });
       
+      // Footer Signature Info
+      const today = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+      const city = settings.city || 'Kota';
+      
+      ws_data.push([]);
+      ws_data.push(['', '', '', `Dibuat di ${city}, ${today}`]);
+      ws_data.push([]);
+      ws_data.push(['Ketua Takmir,', '', '', 'Bendahara,']);
+      ws_data.push([]);
+      ws_data.push([]);
+      ws_data.push([`( ${settings.ketua || '___________________'} )`, '', '', `( ${settings.bendahara || '___________________'} )`]);
+      
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.aoa_to_sheet(ws_data);
+      
+      // Set column widths
+      ws['!cols'] = [
+        {wch: 5}, {wch: 12}, {wch: 30}, {wch: 20}, {wch: 20}, {wch: 15}, {wch: 15}
+      ];
+      
       XLSX.utils.book_append_sheet(wb, ws, "Laporan");
-      XLSX.writeFile(wb, `Laporan_Keuangan.xlsx`);
-    }
-    
-    function exportFridayPDF() {
-       showToast('Fitur export PDF pekanan sedang disiapkan', 'info');
+      XLSX.writeFile(wb, `Laporan_Keuangan_${new Date().toISOString().split('T')[0]}.xlsx`);
     }
 
     // ==================== BACKUP & RESTORE ====================
@@ -1383,7 +1513,7 @@
         try {
           const data = JSON.parse(evt.target.result);
           if(confirm(`Restore data backup tanggal ${data.exported_at}? Data saat ini akan ditimpa.`)) {
-            settings = data.settings;
+            settings = { ...settings, ...data.settings };
             categories = data.categories;
             transactions = data.transactions;
             saveSettingsData(); saveCats(); saveTrans();
@@ -1398,6 +1528,9 @@
     function loadSettingsForm() {
       document.getElementById('settingMosqueName').value = settings.mosque_name;
       document.getElementById('settingMosqueAddress').value = settings.mosque_address;
+      document.getElementById('settingCity').value = settings.city || '';
+      document.getElementById('settingKetua').value = settings.ketua || '';
+      document.getElementById('settingBendahara').value = settings.bendahara || '';
       updatePreview();
     }
     
@@ -1408,7 +1541,16 @@
       saveSettingsData();
       updateHeader();
       updatePreview();
-      showToast('Pengaturan disimpan', 'success');
+      showToast('Informasi Masjid Disimpan', 'success');
+    }
+    
+    function saveReportSettings(e) {
+      e.preventDefault();
+      settings.city = document.getElementById('settingCity').value;
+      settings.ketua = document.getElementById('settingKetua').value;
+      settings.bendahara = document.getElementById('settingBendahara').value;
+      saveSettingsData();
+      showToast('Pengaturan PDF Disimpan', 'success');
     }
     
     function updateHeader() {
