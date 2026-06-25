@@ -1296,8 +1296,15 @@
     function nextWeek() { currentFriday.setDate(currentFriday.getDate()+7); loadFridayReport(); }
     function goToCurrentWeek() { currentFriday = getCurrentFriday(); loadFridayReport(); }
 
-    // ==================== EXPORT FUNCTIONS (FIXED TOTAL TEXT) ====================
+    // ==================== EXPORT FUNCTIONS (FIXED TOTAL & DATE FORMAT) ====================
     
+    // Helper: Format Date with Year (e.g., Jumat, 5 Juni 2026)
+    function formatDateFull(str) {
+      if(!str) return '-';
+      const d = new Date(str);
+      return d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    }
+
     function generatePDFContent(doc, title, periodLabel, financials, tableData, isFriday = false, isRekap = false) {
       // Header
       doc.setFontSize(16);
@@ -1366,17 +1373,15 @@
         startY = isFriday ? doc.lastAutoTable.finalY + 10 : 65;
       } else if (isFriday) {
         headers = [['No', 'Tanggal', 'Keterangan', 'Masuk', 'Keluar']];
-        colStyles = { 0: {cellWidth: 10}, 1: {cellWidth: 25}, 2: {cellWidth: 80}, 3: {cellWidth: 35}, 4: {cellWidth: 35} };
+        // FIX: Column 0 width increased to fit "TOTAL PEKAN"
+        colStyles = { 0: {cellWidth: 25}, 1: {cellWidth: 30}, 2: {cellWidth: 75}, 3: {cellWidth: 35}, 4: {cellWidth: 35} };
         startY = doc.lastAutoTable.finalY + 10;
       } else {
         headers = [['No', 'Tanggal', 'Keterangan', 'Dana/Akad', 'Catatan', 'Masuk', 'Keluar']];
-        colStyles = { 0: {cellWidth: 10}, 1: {cellWidth: 20}, 2: {cellWidth: 45}, 3: {cellWidth: 30}, 4: {cellWidth: 30}, 5: {cellWidth: 25}, 6: {cellWidth: 25} };
+        // FIX: Column 0 width increased to fit "TOTAL"
+        colStyles = { 0: {cellWidth: 20}, 1: {cellWidth: 25}, 2: {cellWidth: 45}, 3: {cellWidth: 30}, 4: {cellWidth: 30}, 5: {cellWidth: 25}, 6: {cellWidth: 25} };
         startY = doc.lastAutoTable.finalY + 10;
       }
-
-      // FIX: Add specific column style for footer first column to prevent cutting off "TOTAL"
-      const footColStyles = { ...colStyles };
-      footColStyles[0] = { cellWidth: 'auto', halign: 'left', overflow: 'linebreak' };
 
       doc.autoTable({
         startY: startY,
@@ -1388,16 +1393,19 @@
         footStyles: { fillColor: [240, 253, 244], textColor: [0,0,0], fontStyle: 'bold' },
         styles: { fontSize: 8, cellPadding: 2 },
         columnStyles: colStyles,
-        // Apply specific footer column styles to fix the cut-off text
+        // FIX: Force footer cell to not cut off text
         didParseCell: function(data) {
-            if (data.section === 'foot' && data.column.index === 0) {
-                // Force left alignment and ensure full width for the label
-                data.cell.styles.halign = 'left';
+            if (data.section === 'foot') {
+                // Ensure footer row has enough height and text wraps
+                data.cell.styles.minCellHeight = 8;
                 data.cell.styles.overflow = 'linebreak';
-            }
-            // Ensure numeric columns in footer are right aligned
-            if (data.section === 'foot' && data.column.index > 0) {
-                data.cell.styles.halign = 'right';
+                
+                // Align first column left, others right for totals
+                if (data.column.index === 0) {
+                    data.cell.styles.halign = 'left';
+                } else {
+                    data.cell.styles.halign = 'right';
+                }
             }
         }
       });
@@ -1405,6 +1413,7 @@
       // Signature Footer
       const finalY = doc.lastAutoTable.finalY + 15; 
       const pageWidth = doc.internal.pageSize.width;
+      // Use full date format with year
       const today = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
       
       doc.setFontSize(10);
@@ -1436,12 +1445,13 @@
       const totalInc = data.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
       const totalExp = data.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
       
+      // Rebuild table data with Full Date Format (with Year)
       const tableData = {
         body: data.map((t, i) => {
           const fund = t.fund_source ? categories.find(c => c.id === t.fund_source)?.name : '-';
           return [
             i+1,
-            t.date,
+            formatDateFull(t.date), // Added Year here
             t.description,
             fund,
             t.notes || '-',
@@ -1482,10 +1492,11 @@
         finalFundBalances: {}
       };
       
+      // Rebuild table data with Full Date Format (with Year)
       const tableData = {
         body: weekTrans.sort((a,b)=>new Date(a.date)-new Date(b.date)).map((t, i) => [
           i+1,
-          formatDateID(t.date),
+          formatDateFull(t.date), // Added Year here
           t.description,
           t.type === 'income' ? formatRupiah(t.amount) : '-',
           t.type === 'expense' ? formatRupiah(t.amount) : '-'
