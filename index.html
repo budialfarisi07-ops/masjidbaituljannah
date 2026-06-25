@@ -1296,16 +1296,14 @@
     function nextWeek() { currentFriday.setDate(currentFriday.getDate()+7); loadFridayReport(); }
     function goToCurrentWeek() { currentFriday = getCurrentFriday(); loadFridayReport(); }
 
-    // ==================== EXPORT FUNCTIONS (FIXED SIGNATURE SPACING) ====================
+    // ==================== EXPORT FUNCTIONS ====================
     
-    // Helper: Format Date DD/MM/YYYY (No Day Name for Table)
     function formatDateTable(str) {
       if(!str) return '-';
       const d = new Date(str);
       return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
     }
 
-    // Helper: Format Period Label with Full Year & Day Name
     function formatPeriodLabelFull(startStr, endStr) {
       if(!startStr || !endStr) return 'Semua Periode';
       const d1 = new Date(startStr);
@@ -1315,7 +1313,6 @@
     }
 
     function generatePDFContent(doc, title, periodLabel, financials, tableData, isFriday = false, isRekap = false) {
-      // Header
       doc.setFontSize(16);
       doc.setFont(undefined, 'bold');
       doc.text(settings.mosque_name.toUpperCase(), 105, 15, { align: 'center' });
@@ -1331,7 +1328,6 @@
       doc.setFont(undefined, 'normal');
       doc.text(`Periode: ${periodLabel}`, 105, 42, { align: 'center' });
       
-      // Summary Box
       if (!isRekap) {
         doc.autoTable({
           startY: 50,
@@ -1348,7 +1344,6 @@
           margin: { left: 14, right: 14 }
         });
         
-        // Rincian Saldo Akhir Table
         const breakdownEntries = Object.entries(financials.finalFundBalances).filter(([_, val]) => val !== 0);
         if(breakdownEntries.length > 0) {
            const rincianBody = breakdownEntries.map(([fundId, amount]) => {
@@ -1373,7 +1368,6 @@
         }
       }
       
-      // Table Configuration
       let headers, colStyles, startY;
       
       if (isRekap) {
@@ -1416,8 +1410,6 @@
         columnStyles: colStyles
       });
       
-      // Signature Footer
-      // FIX: Reduced gap between City/Date and Position Title to ~1cm (approx 8 units in jsPDF)
       const finalY = doc.lastAutoTable.finalY + 8; 
       const pageWidth = doc.internal.pageSize.width;
       const today = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -1427,11 +1419,9 @@
       const city = settings.city || 'Kota';
       doc.text(`${city}, ${today}`, pageWidth/2, finalY, { align: 'center' });
       
-      // Position Titles (Closer to Date)
       doc.text('Ketua Takmir,', 30, finalY + 8); 
       doc.text('Bendahara,', pageWidth - 70, finalY + 8);
       
-      // Names (Maintained original distance from Position Titles for signature space)
       doc.text(`( ${settings.ketua || '___________________'} )`, 30, finalY + 35); 
       doc.text(`( ${settings.bendahara || '___________________'} )`, pageWidth - 70, finalY + 35);
     }
@@ -1445,7 +1435,6 @@
       const startDate = document.getElementById('filterStartDate').value;
       const endDate = document.getElementById('filterEndDate').value;
       
-      // Use Full Period Label with Year and Day Name
       let periodLabel = 'Semua Periode';
       if(startDate && endDate) {
         periodLabel = formatPeriodLabelFull(startDate, endDate);
@@ -1454,14 +1443,12 @@
       const totalInc = data.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
       const totalExp = data.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
       
-      // Rebuild table data with DD/MM/YYYY format (No Day Name)
-      // TOTAL placed at Index 2 (under Keterangan)
       const tableData = {
         body: data.map((t, i) => {
           const fund = t.fund_source ? categories.find(c => c.id === t.fund_source)?.name : '-';
           return [
             i+1,
-            formatDateTable(t.date), // DD/MM/YYYY only
+            formatDateTable(t.date),
             t.description,
             fund,
             t.notes || '-',
@@ -1486,7 +1473,6 @@
       const sStr = fri.toISOString().split('T')[0];
       const eStr = thu.toISOString().split('T')[0];
       
-      // Use Full Period Label with Year and Day Name
       const periodLabel = formatPeriodLabelFull(sStr, eStr);
       
       const prevTrans = transactions.filter(t => t.date < sStr);
@@ -1504,12 +1490,10 @@
         finalFundBalances: {}
       };
       
-      // Rebuild table data with DD/MM/YYYY format (No Day Name)
-      // TOTAL PEKAN placed at Index 2 (under Keterangan)
       const tableData = {
         body: weekTrans.sort((a,b)=>new Date(a.date)-new Date(b.date)).map((t, i) => [
           i+1,
-          formatDateTable(t.date), // DD/MM/YYYY only
+          formatDateTable(t.date),
           t.description,
           t.type === 'income' ? formatRupiah(t.amount) : '-',
           t.type === 'expense' ? formatRupiah(t.amount) : '-'
@@ -1521,7 +1505,6 @@
       doc.save(`Laporan_Jumat_${settings.mosque_name}_${sStr}.pdf`);
     }
 
-    // ==================== REKAP BULANAN LOGIC ====================
     function showRekapModal() {
       document.getElementById('rekapModal').classList.remove('hidden');
       const end = new Date();
@@ -1584,7 +1567,6 @@
         foot: ['TOTAL KESELURUHAN', formatRupiah(totalInc), formatRupiah(totalExp)]
       };
       
-      // Use Full Period Label with Year and Day Name
       const periodLabel = formatPeriodLabelFull(startDate, endDate);
       const dummyFinancials = { initialBalanceTotal: 0, income: totalInc, expense: totalExp, finalBalance: 0, finalFundBalances: {} };
       
@@ -1593,22 +1575,23 @@
       closeRekapModal();
     }
     
-    function exportExcel() {
+    // FIX: Auto-generate Excel based on current filter and open GDrive for upload
+    function backupToGDrive() {
       const data = getFilteredData();
       const startDate = document.getElementById('filterStartDate').value;
+      const endDate = document.getElementById('filterEndDate').value;
       const financials = calculateFinancials(data, startDate || '1900-01-01');
       
-      // Use Full Period Label with Year and Day Name
       let periodLabel = 'Semua Periode';
-      if(startDate && document.getElementById('filterEndDate').value) {
-        periodLabel = formatPeriodLabelFull(startDate, document.getElementById('filterEndDate').value);
+      if(startDate && endDate) {
+        periodLabel = formatPeriodLabelFull(startDate, endDate);
       }
 
       const ws_data = [
         [settings.mosque_name.toUpperCase()],
         [settings.mosque_address],
         [],
-        ['LAPORAN KEUANGAN BULANAN'],
+        ['LAPORAN KEUANGAN'],
         [`Periode: ${periodLabel}`],
         [],
         ['RINGKASAN KEUANGAN'],
@@ -1637,32 +1620,23 @@
         ]);
       });
       
-      // Place TOTAL under Keterangan (Index 2) in Excel too
       ws_data.push(['', '', 'TOTAL', '', '', totalInc, totalExp]);
-      
-      const today = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-      const city = settings.city || 'Kota';
-      
-      ws_data.push([]);
-      ws_data.push(['', '', '', `${city}, ${today}`]);
-      ws_data.push([]);
-      ws_data.push(['Ketua Takmir,', '', '', 'Bendahara,']);
-      ws_data.push([]);
-      ws_data.push([]);
-      ws_data.push([`( ${settings.ketua || '___________________'} )`, '', '', `( ${settings.bendahara || '___________________'} )`]);
       
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.aoa_to_sheet(ws_data);
-      
-      ws['!cols'] = [
-        {wch: 5}, {wch: 12}, {wch: 30}, {wch: 20}, {wch: 20}, {wch: 15}, {wch: 15}
-      ];
+      ws['!cols'] = [{wch: 5}, {wch: 12}, {wch: 30}, {wch: 20}, {wch: 20}, {wch: 15}, {wch: 15}];
       
       XLSX.utils.book_append_sheet(wb, ws, "Laporan");
-      XLSX.writeFile(wb, `Laporan_Keuangan_${new Date().toISOString().split('T')[0]}.xlsx`);
+      
+      const fileName = `Backup_${settings.mosque_name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+      
+      setTimeout(() => {
+        window.open('https://drive.google.com/drive/my-drive', '_blank');
+        showToast('File Excel berhasil didownload. Silakan upload ke Google Drive.', 'info');
+      }, 1000);
     }
-
-    // ==================== BACKUP & RESTORE ====================
+    
     function downloadBackupJSON() {
       const data = { settings, categories, transactions, exported_at: new Date() };
       const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
