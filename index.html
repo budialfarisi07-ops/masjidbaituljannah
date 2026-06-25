@@ -1296,7 +1296,7 @@
     function nextWeek() { currentFriday.setDate(currentFriday.getDate()+7); loadFridayReport(); }
     function goToCurrentWeek() { currentFriday = getCurrentFriday(); loadFridayReport(); }
 
-    // ==================== EXPORT FUNCTIONS (FIXED DATE FORMAT & PERIOD LABEL) ====================
+    // ==================== EXPORT FUNCTIONS (FIXED SIGNATURE SPACING) ====================
     
     // Helper: Format Date DD/MM/YYYY (No Day Name for Table)
     function formatDateTable(str) {
@@ -1417,7 +1417,8 @@
       });
       
       // Signature Footer
-      const finalY = doc.lastAutoTable.finalY + 15; 
+      // FIX: Reduced gap between City/Date and Position Title to ~1cm (approx 8 units in jsPDF)
+      const finalY = doc.lastAutoTable.finalY + 8; 
       const pageWidth = doc.internal.pageSize.width;
       const today = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
       
@@ -1426,11 +1427,13 @@
       const city = settings.city || 'Kota';
       doc.text(`${city}, ${today}`, pageWidth/2, finalY, { align: 'center' });
       
-      doc.text('Ketua Takmir,', 30, finalY + 25); 
-      doc.text(`( ${settings.ketua || '___________________'} )`, 30, finalY + 50); 
+      // Position Titles (Closer to Date)
+      doc.text('Ketua Takmir,', 30, finalY + 8); 
+      doc.text('Bendahara,', pageWidth - 70, finalY + 8);
       
-      doc.text('Bendahara,', pageWidth - 70, finalY + 25);
-      doc.text(`( ${settings.bendahara || '___________________'} )`, pageWidth - 70, finalY + 50);
+      // Names (Maintained original distance from Position Titles for signature space)
+      doc.text(`( ${settings.ketua || '___________________'} )`, 30, finalY + 35); 
+      doc.text(`( ${settings.bendahara || '___________________'} )`, pageWidth - 70, finalY + 35);
     }
 
     function exportPDF() {
@@ -1442,7 +1445,7 @@
       const startDate = document.getElementById('filterStartDate').value;
       const endDate = document.getElementById('filterEndDate').value;
       
-      // FIX: Use Full Period Label with Year and Day Name
+      // Use Full Period Label with Year and Day Name
       let periodLabel = 'Semua Periode';
       if(startDate && endDate) {
         periodLabel = formatPeriodLabelFull(startDate, endDate);
@@ -1451,8 +1454,7 @@
       const totalInc = data.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
       const totalExp = data.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
       
-      // FIX: Rebuild table data with DD/MM/YYYY format (No Day Name)
-      // Headers: No(0), Tanggal(1), Keterangan(2), Dana(3), Catatan(4), Masuk(5), Keluar(6)
+      // Rebuild table data with DD/MM/YYYY format (No Day Name)
       // TOTAL placed at Index 2 (under Keterangan)
       const tableData = {
         body: data.map((t, i) => {
@@ -1484,7 +1486,7 @@
       const sStr = fri.toISOString().split('T')[0];
       const eStr = thu.toISOString().split('T')[0];
       
-      // FIX: Use Full Period Label with Year and Day Name
+      // Use Full Period Label with Year and Day Name
       const periodLabel = formatPeriodLabelFull(sStr, eStr);
       
       const prevTrans = transactions.filter(t => t.date < sStr);
@@ -1502,8 +1504,7 @@
         finalFundBalances: {}
       };
       
-      // FIX: Rebuild table data with DD/MM/YYYY format (No Day Name)
-      // Headers: No(0), Tanggal(1), Keterangan(2), Masuk(3), Keluar(4)
+      // Rebuild table data with DD/MM/YYYY format (No Day Name)
       // TOTAL PEKAN placed at Index 2 (under Keterangan)
       const tableData = {
         body: weekTrans.sort((a,b)=>new Date(a.date)-new Date(b.date)).map((t, i) => [
@@ -1583,7 +1584,7 @@
         foot: ['TOTAL KESELURUHAN', formatRupiah(totalInc), formatRupiah(totalExp)]
       };
       
-      // FIX: Use Full Period Label with Year and Day Name
+      // Use Full Period Label with Year and Day Name
       const periodLabel = formatPeriodLabelFull(startDate, endDate);
       const dummyFinancials = { initialBalanceTotal: 0, income: totalInc, expense: totalExp, finalBalance: 0, finalFundBalances: {} };
       
@@ -1597,7 +1598,7 @@
       const startDate = document.getElementById('filterStartDate').value;
       const financials = calculateFinancials(data, startDate || '1900-01-01');
       
-      // FIX: Use Full Period Label with Year and Day Name
+      // Use Full Period Label with Year and Day Name
       let periodLabel = 'Semua Periode';
       if(startDate && document.getElementById('filterEndDate').value) {
         periodLabel = formatPeriodLabelFull(startDate, document.getElementById('filterEndDate').value);
@@ -1636,7 +1637,7 @@
         ]);
       });
       
-      // FIX: Place TOTAL under Keterangan (Index 2) in Excel too
+      // Place TOTAL under Keterangan (Index 2) in Excel too
       ws_data.push(['', '', 'TOTAL', '', '', totalInc, totalExp]);
       
       const today = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
