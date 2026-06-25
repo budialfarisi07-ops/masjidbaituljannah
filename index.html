@@ -1296,13 +1296,22 @@
     function nextWeek() { currentFriday.setDate(currentFriday.getDate()+7); loadFridayReport(); }
     function goToCurrentWeek() { currentFriday = getCurrentFriday(); loadFridayReport(); }
 
-    // ==================== EXPORT FUNCTIONS (FIXED TOTAL POSITION, COLUMN WIDTHS & DATE FORMAT) ====================
+    // ==================== EXPORT FUNCTIONS (FIXED DATE FORMAT & PERIOD LABEL) ====================
     
-    // Helper: Format Date with Year (e.g., Jumat, 5 Juni 2026)
-    function formatDateFull(str) {
+    // Helper: Format Date DD/MM/YYYY (No Day Name for Table)
+    function formatDateTable(str) {
       if(!str) return '-';
       const d = new Date(str);
-      return d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    // Helper: Format Period Label with Full Year & Day Name
+    function formatPeriodLabelFull(startStr, endStr) {
+      if(!startStr || !endStr) return 'Semua Periode';
+      const d1 = new Date(startStr);
+      const d2 = new Date(endStr);
+      const opt = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+      return `${d1.toLocaleDateString('id-ID', opt)} - ${d2.toLocaleDateString('id-ID', opt)}`;
     }
 
     function generatePDFContent(doc, title, periodLabel, financials, tableData, isFriday = false, isRekap = false) {
@@ -1373,22 +1382,20 @@
         startY = isFriday ? doc.lastAutoTable.finalY + 10 : 65;
       } else if (isFriday) {
         headers = [['No', 'Tanggal', 'Keterangan', 'Masuk', 'Keluar']];
-        // FIX: Adjusted widths to fit A4 portrait perfectly
         colStyles = { 
           0: {cellWidth: 10, halign: 'center'}, 
-          1: {cellWidth: 35}, 
-          2: {cellWidth: 75}, 
+          1: {cellWidth: 25}, 
+          2: {cellWidth: 80}, 
           3: {cellWidth: 35, halign: 'right'}, 
           4: {cellWidth: 35, halign: 'right'} 
         };
         startY = doc.lastAutoTable.finalY + 10;
       } else {
         headers = [['No', 'Tanggal', 'Keterangan', 'Dana/Akad', 'Catatan', 'Masuk', 'Keluar']];
-        // FIX: Adjusted widths to fit A4 portrait perfectly
         colStyles = { 
           0: {cellWidth: 10, halign: 'center'}, 
-          1: {cellWidth: 30}, 
-          2: {cellWidth: 50}, 
+          1: {cellWidth: 20}, 
+          2: {cellWidth: 55}, 
           3: {cellWidth: 30}, 
           4: {cellWidth: 25}, 
           5: {cellWidth: 25, halign: 'right'}, 
@@ -1406,47 +1413,7 @@
         headStyles: { fillColor: [22, 163, 74], fontSize: 8 },
         footStyles: { fillColor: [240, 253, 244], textColor: [0,0,0], fontStyle: 'bold' },
         styles: { fontSize: 8, cellPadding: 2 },
-        columnStyles: colStyles,
-        // FIX: Move "TOTAL" text to align with "Keterangan" column (Index 2)
-        didParseCell: function(data) {
-            if (data.section === 'foot') {
-                data.cell.styles.minCellHeight = 8;
-                data.cell.styles.overflow = 'linebreak';
-                
-                // If it's the first column (No), make it empty and remove borders visually if needed
-                if (data.column.index === 0) {
-                    data.cell.text = ['']; 
-                    data.cell.styles.halign = 'center';
-                } 
-                // If it's the second column (Tanggal/Keterangan), put the TOTAL label here
-                else if (data.column.index === 1) {
-                    // For Friday report, Keterangan is index 2, but we want it under Tanggal/Keterangan area
-                    // Actually, based on request "sejajar vertikal dengan kolom KETERANGAN"
-                    // In main report: No(0), Tanggal(1), Keterangan(2). So TOTAL goes to index 2.
-                    // In friday report: No(0), Tanggal(1), Keterangan(2). So TOTAL goes to index 2.
-                    
-                    // Wait, let's re-read carefully. "Pindahkan teks TOTAL paling bawah sejajar vertikal dengan kolom KETERANGAN"
-                    // Main Report Headers: No | Tanggal | Keterangan | Dana | Catatan | Masuk | Keluar
-                    // Friday Report Headers: No | Tanggal | Keterangan | Masuk | Keluar
-                    
-                    // So for both, Keterangan is Index 2.
-                    // But in my previous logic I put it in index 1. Let's fix this specifically.
-                }
-            }
-        },
-        // Override specifically for footer content placement
-        willDrawCell: function(data) {
-             if (data.section === 'foot') {
-                 // Clear column 0 (No)
-                 if (data.column.index === 0) {
-                     data.cell.text = [''];
-                 }
-                 // Move text from original position to Column 2 (Keterangan)
-                 // Note: The 'foot' array passed to autoTable defines the content per column index.
-                 // We need to manipulate the data before drawing or change how we construct the foot array.
-                 // Easier way: Construct the foot array correctly from the start!
-             }
-        }
+        columnStyles: colStyles
       });
       
       // Signature Footer
@@ -1474,23 +1441,25 @@
       
       const startDate = document.getElementById('filterStartDate').value;
       const endDate = document.getElementById('filterEndDate').value;
+      
+      // FIX: Use Full Period Label with Year and Day Name
       let periodLabel = 'Semua Periode';
       if(startDate && endDate) {
-        periodLabel = `${formatDateID(startDate)} - ${formatDateID(endDate)}`;
+        periodLabel = formatPeriodLabelFull(startDate, endDate);
       }
       
       const totalInc = data.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
       const totalExp = data.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
       
-      // FIX: Rebuild table data with Full Date Format & Correct TOTAL Position
+      // FIX: Rebuild table data with DD/MM/YYYY format (No Day Name)
       // Headers: No(0), Tanggal(1), Keterangan(2), Dana(3), Catatan(4), Masuk(5), Keluar(6)
-      // We want TOTAL at Index 2 (Keterangan). So Index 0 and 1 must be empty strings.
+      // TOTAL placed at Index 2 (under Keterangan)
       const tableData = {
         body: data.map((t, i) => {
           const fund = t.fund_source ? categories.find(c => c.id === t.fund_source)?.name : '-';
           return [
             i+1,
-            formatDateFull(t.date), // Added Year here
+            formatDateTable(t.date), // DD/MM/YYYY only
             t.description,
             fund,
             t.notes || '-',
@@ -1498,7 +1467,6 @@
             t.type === 'expense' ? formatRupiah(t.amount) : '-'
           ];
         }),
-        // FIX: Place TOTAL text at index 2 (under Keterangan)
         foot: ['', '', 'TOTAL', '', '', formatRupiah(totalInc), formatRupiah(totalExp)]
       };
       
@@ -1515,7 +1483,9 @@
       thu.setDate(fri.getDate() + 6);
       const sStr = fri.toISOString().split('T')[0];
       const eStr = thu.toISOString().split('T')[0];
-      const periodLabel = `${formatDateID(sStr)} - ${formatDateID(eStr)}`;
+      
+      // FIX: Use Full Period Label with Year and Day Name
+      const periodLabel = formatPeriodLabelFull(sStr, eStr);
       
       const prevTrans = transactions.filter(t => t.date < sStr);
       const initBal = prevTrans.reduce((s, t) => s + (t.type==='income'?t.amount:-t.amount), 0);
@@ -1532,18 +1502,17 @@
         finalFundBalances: {}
       };
       
-      // FIX: Rebuild table data with Full Date Format & Correct TOTAL Position
+      // FIX: Rebuild table data with DD/MM/YYYY format (No Day Name)
       // Headers: No(0), Tanggal(1), Keterangan(2), Masuk(3), Keluar(4)
-      // We want TOTAL PEKAN at Index 2 (under Keterangan).
+      // TOTAL PEKAN placed at Index 2 (under Keterangan)
       const tableData = {
         body: weekTrans.sort((a,b)=>new Date(a.date)-new Date(b.date)).map((t, i) => [
           i+1,
-          formatDateFull(t.date), // Added Year here
+          formatDateTable(t.date), // DD/MM/YYYY only
           t.description,
           t.type === 'income' ? formatRupiah(t.amount) : '-',
           t.type === 'expense' ? formatRupiah(t.amount) : '-'
         ]),
-        // FIX: Place TOTAL PEKAN text at index 2 (under Keterangan)
         foot: ['', '', 'TOTAL PEKAN', formatRupiah(inc), formatRupiah(exp)]
       };
       
@@ -1614,7 +1583,8 @@
         foot: ['TOTAL KESELURUHAN', formatRupiah(totalInc), formatRupiah(totalExp)]
       };
       
-      const periodLabel = `${formatDateID(startDate)} - ${formatDateID(endDate)}`;
+      // FIX: Use Full Period Label with Year and Day Name
+      const periodLabel = formatPeriodLabelFull(startDate, endDate);
       const dummyFinancials = { initialBalanceTotal: 0, income: totalInc, expense: totalExp, finalBalance: 0, finalFundBalances: {} };
       
       generatePDFContent(doc, 'REKAPITULASI LAPORAN BULANAN', periodLabel, dummyFinancials, tableData, false, true);
@@ -1627,9 +1597,10 @@
       const startDate = document.getElementById('filterStartDate').value;
       const financials = calculateFinancials(data, startDate || '1900-01-01');
       
+      // FIX: Use Full Period Label with Year and Day Name
       let periodLabel = 'Semua Periode';
       if(startDate && document.getElementById('filterEndDate').value) {
-        periodLabel = `${formatDateID(startDate)} - ${formatDateID(document.getElementById('filterEndDate').value)}`;
+        periodLabel = formatPeriodLabelFull(startDate, document.getElementById('filterEndDate').value);
       }
 
       const ws_data = [
@@ -1665,6 +1636,7 @@
         ]);
       });
       
+      // FIX: Place TOTAL under Keterangan (Index 2) in Excel too
       ws_data.push(['', '', 'TOTAL', '', '', totalInc, totalExp]);
       
       const today = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -1682,7 +1654,7 @@
       const ws = XLSX.utils.aoa_to_sheet(ws_data);
       
       ws['!cols'] = [
-        {wch: 5}, {wch: 25}, {wch: 30}, {wch: 20}, {wch: 20}, {wch: 15}, {wch: 15}
+        {wch: 5}, {wch: 12}, {wch: 30}, {wch: 20}, {wch: 20}, {wch: 15}, {wch: 15}
       ];
       
       XLSX.utils.book_append_sheet(wb, ws, "Laporan");
