@@ -623,7 +623,7 @@
     <span id="toastMsg"></span>
   </div>
 
-  <script>
+    <script>
     // ==================== CONFIG & STATE ====================
     const STORAGE = {
       trans: 'masjid_v2_trans',
@@ -669,7 +669,6 @@
       loadData();
       initApp();
       
-      // Close sidebar when clicking outside on mobile
       document.addEventListener('click', (e) => {
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebarOverlay');
@@ -688,7 +687,7 @@
         const s = localStorage.getItem(STORAGE.settings);
         if (t) transactions = JSON.parse(t);
         if (c) categories = JSON.parse(c); else { categories = [...DEFAULT_CATS]; saveCats(); }
-        if (s) settings = { ...settings, ...JSON.parse(s) }; // Merge to keep defaults if old data
+        if (s) settings = { ...settings, ...JSON.parse(s) };
       } catch(e) { console.error(e); }
     }
     
@@ -700,12 +699,8 @@
       updateHeader();
       renderDropdowns();
       initColorPicker();
-      
-      // Set default period to This Month
       document.getElementById('filterPeriod').value = 'monthly';
       handlePeriodChange();
-      
-      // Set today's date for modal
       document.getElementById('transDate').valueAsDate = new Date();
     }
 
@@ -714,7 +709,6 @@
       document.querySelectorAll('.page-content').forEach(el => el.classList.add('hidden'));
       document.getElementById(`page-${pageId}`).classList.remove('hidden');
       
-      // Update Nav Styles
       document.querySelectorAll('.nav-btn').forEach(btn => {
         if(btn.dataset.page === pageId) {
           btn.classList.remove('text-green-100', 'hover:bg-white/10');
@@ -725,11 +719,9 @@
         }
       });
       
-      // Mobile Title
       const titles = { dashboard: 'Dashboard', jumat: 'Laporan Jumat', settings: 'Pengaturan' };
       document.getElementById('mobileTitle').textContent = titles[pageId];
       
-      // Close sidebar on mobile
       if(window.innerWidth < 768) toggleSidebar(false);
       
       if(pageId === 'jumat') loadFridayReport();
@@ -757,7 +749,7 @@
       container.classList.toggle('hidden');
       if(!container.classList.contains('hidden')) {
         arrow.classList.add('rotate-180');
-        setTimeout(updateCharts, 100); // Render charts after visibility
+        setTimeout(updateCharts, 100);
       } else {
         arrow.classList.remove('rotate-180');
       }
@@ -767,7 +759,7 @@
       document.getElementById('backupMenu').classList.toggle('hidden');
     }
 
-    // ==================== CORE LOGIC: FILTERING & CALCULATION ====================
+    // ==================== CORE LOGIC ====================
     
     function getFilteredData() {
       const type = document.getElementById('filterType').value;
@@ -783,7 +775,6 @@
       if (start) data = data.filter(t => t.date >= start);
       if (end) data = data.filter(t => t.date <= end);
       
-      // Sort
       data.sort((a, b) => {
         return order === 'asc' ? new Date(a.date) - new Date(b.date) : new Date(b.date) - new Date(a.date);
       });
@@ -792,28 +783,23 @@
     }
     
     function calculateFinancials(data, startDate) {
-      // 1. Calculate Initial Balance (All transactions BEFORE start date)
       const allPrevTrans = transactions.filter(t => t.date < startDate);
       
       let initialBalanceTotal = 0;
-      const fundBalances = {}; // { fundId: amount }
+      const fundBalances = {};
       
       allPrevTrans.forEach(t => {
         const amt = t.type === 'income' ? t.amount : -t.amount;
         initialBalanceTotal += amt;
-        
-        // Track per fund source
         const fId = t.fund_source || 'general';
         if (!fundBalances[fId]) fundBalances[fId] = 0;
         fundBalances[fId] += amt;
       });
       
-      // 2. Calculate Current Period Totals
       const income = data.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
       const expense = data.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
       const finalBalance = initialBalanceTotal + income - expense;
       
-      // 3. Calculate Final Balance per Fund (for breakdown)
       const finalFundBalances = { ...fundBalances };
       data.forEach(t => {
         const amt = t.type === 'income' ? t.amount : -t.amount;
@@ -831,19 +817,14 @@
       
       const financials = calculateFinancials(data, startDate);
       
-      // Update Summary Cards
       document.getElementById('totalInitialBalance').textContent = formatRupiah(financials.initialBalanceTotal);
       document.getElementById('totalIncome').textContent = formatRupiah(financials.income);
       document.getElementById('totalExpense').textContent = formatRupiah(financials.expense);
       document.getElementById('totalFinalBalance').textContent = formatRupiah(financials.finalBalance);
       
-      // Update Breakdown (Rincian Saldo)
       renderBalanceBreakdown(financials.finalFundBalances);
-      
-      // Render Table
       renderTable(data);
       
-      // Update Charts (if visible)
       if(!document.getElementById('chartContainer').classList.contains('hidden')) {
         updateCharts(data);
       }
@@ -864,7 +845,6 @@
       
       entries.forEach(([fundId, amount]) => {
         let label = 'Umum / Tidak Teridentifikasi';
-        
         if(fundId !== 'general') {
           const cat = categories.find(c => c.id === fundId);
           if(cat) label = cat.name;
@@ -934,7 +914,6 @@
       document.getElementById('tableTotalExpense').textContent = formatRupiah(totalExp);
     }
     
-    // ==================== DATE HANDLING ====================
     function handlePeriodChange() {
       const period = document.getElementById('filterPeriod').value;
       const customDiv = document.getElementById('customDateRange');
@@ -1055,21 +1034,18 @@
     function renderDropdowns() {
       const type = document.getElementById('transType')?.value || 'income';
       const filteredCats = categories.filter(c => c.type === type);
-      const incomeCats = categories.filter(c => c.type === 'income'); // For Fund Source
+      const incomeCats = categories.filter(c => c.type === 'income');
       
-      // Main Category Select
       const catSelect = document.getElementById('transCategory');
       const currCat = catSelect.value;
       catSelect.innerHTML = '<option value="">Pilih Kategori</option>' + filteredCats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
       if(currCat) catSelect.value = currCat;
       
-      // Fund Source Select (Always Income Categories)
       const fundSelect = document.getElementById('transFundSource');
       const currFund = fundSelect.value;
       fundSelect.innerHTML = '<option value="">-- Pilih Dana (Opsional) --</option>' + incomeCats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
       if(currFund) fundSelect.value = currFund;
       
-      // Filter Category Select
       const filterSelect = document.getElementById('filterCategory');
       const currFilter = filterSelect.value;
       const filterType = document.getElementById('filterType').value;
@@ -1080,7 +1056,6 @@
       if(currFilter) filterSelect.value = currFilter;
     }
     
-    // Category Modal Logic
     let currentCatTab = 'income';
     function openCategoryModal() { 
       document.getElementById('categoryModal').classList.remove('hidden'); 
@@ -1176,7 +1151,6 @@
       }
     }
 
-    // ==================== COLOR PICKER LOGIC ====================
     function initColorPicker() {
       const picker = document.getElementById('colorPicker');
       picker.innerHTML = COLOR_OPTIONS.map(color => `
@@ -1245,7 +1219,6 @@
         }
       });
       
-      // Render Breakdown Text
       const bd = document.getElementById(breakdownId);
       bd.innerHTML = labels.map((name, i) => {
         const val = values[i];
@@ -1284,7 +1257,6 @@
       
       document.getElementById('weekLabel').textContent = `${formatDateID(sStr)} - ${formatDateID(eStr)}`;
       
-      // Calculations
       const prevTrans = transactions.filter(t => t.date < sStr);
       const initBal = prevTrans.reduce((s, t) => s + (t.type==='income'?t.amount:-t.amount), 0);
       
@@ -1298,7 +1270,6 @@
       document.getElementById('fridayTotalExpense').textContent = formatRupiah(exp);
       document.getElementById('fridayFinalBalance').textContent = formatRupiah(final);
       
-      // Table
       const tbody = document.getElementById('fridayTableBody');
       const empty = document.getElementById('fridayEmptyState');
       
@@ -1325,9 +1296,8 @@
     function nextWeek() { currentFriday.setDate(currentFriday.getDate()+7); loadFridayReport(); }
     function goToCurrentWeek() { currentFriday = getCurrentFriday(); loadFridayReport(); }
 
-    // ==================== EXPORT FUNCTIONS ====================
+    // ==================== EXPORT FUNCTIONS (FIXED TOTAL TEXT) ====================
     
-    // Helper to generate PDF content structure
     function generatePDFContent(doc, title, periodLabel, financials, tableData, isFriday = false, isRekap = false) {
       // Header
       doc.setFontSize(16);
@@ -1345,7 +1315,7 @@
       doc.setFont(undefined, 'normal');
       doc.text(`Periode: ${periodLabel}`, 105, 42, { align: 'center' });
       
-      // Summary Box (Table Style)
+      // Summary Box
       if (!isRekap) {
         doc.autoTable({
           startY: 50,
@@ -1362,7 +1332,7 @@
           margin: { left: 14, right: 14 }
         });
         
-        // Rincian Saldo Akhir Table (Vertical Single Column)
+        // Rincian Saldo Akhir Table
         const breakdownEntries = Object.entries(financials.finalFundBalances).filter(([_, val]) => val !== 0);
         if(breakdownEntries.length > 0) {
            const rincianBody = breakdownEntries.map(([fundId, amount]) => {
@@ -1379,7 +1349,7 @@
              head: [['RINCIAN SALDO AKHIR PER AKAD / DANA', '']],
              body: rincianBody,
              theme: 'grid',
-             headStyles: { fillColor: [147, 51, 234], textColor: 255, halign: 'center', fontSize: 10 }, // Purple header
+             headStyles: { fillColor: [147, 51, 234], textColor: 255, halign: 'center', fontSize: 10 },
              styles: { fontSize: 9 },
              columnStyles: { 0: { cellWidth: 120 }, 1: { halign: 'right', fontStyle: 'bold' } },
              margin: { left: 14, right: 14 }
@@ -1387,7 +1357,7 @@
         }
       }
       
-      // Table Headers based on type
+      // Table Configuration
       let headers, colStyles, startY;
       
       if (isRekap) {
@@ -1404,6 +1374,10 @@
         startY = doc.lastAutoTable.finalY + 10;
       }
 
+      // FIX: Add specific column style for footer first column to prevent cutting off "TOTAL"
+      const footColStyles = { ...colStyles };
+      footColStyles[0] = { cellWidth: 'auto', halign: 'left', overflow: 'linebreak' };
+
       doc.autoTable({
         startY: startY,
         head: headers,
@@ -1411,13 +1385,19 @@
         foot: tableData.foot ? [tableData.foot] : [],
         theme: 'grid',
         headStyles: { fillColor: [22, 163, 74], fontSize: 8 },
-        footStyles: { fillColor: [240, 253, 244], textColor: [0,0,0], fontStyle: 'bold', halign: 'right' },
+        footStyles: { fillColor: [240, 253, 244], textColor: [0,0,0], fontStyle: 'bold' },
         styles: { fontSize: 8, cellPadding: 2 },
         columnStyles: colStyles,
+        // Apply specific footer column styles to fix the cut-off text
         didParseCell: function(data) {
-            // Fix for footer text cutting off by ensuring row height
-            if (data.section === 'foot') {
-                data.cell.styles.minCellHeight = 8;
+            if (data.section === 'foot' && data.column.index === 0) {
+                // Force left alignment and ensure full width for the label
+                data.cell.styles.halign = 'left';
+                data.cell.styles.overflow = 'linebreak';
+            }
+            // Ensure numeric columns in footer are right aligned
+            if (data.section === 'foot' && data.column.index > 0) {
+                data.cell.styles.halign = 'right';
             }
         }
       });
@@ -1432,12 +1412,10 @@
       const city = settings.city || 'Kota';
       doc.text(`${city}, ${today}`, pageWidth/2, finalY, { align: 'center' });
       
-      // Increased vertical gap for signature space (Normal distance)
-      // Ketua Takmir (Left)
+      // Normal distance for signature
       doc.text('Ketua Takmir,', 30, finalY + 25); 
       doc.text(`( ${settings.ketua || '___________________'} )`, 30, finalY + 50); 
       
-      // Bendahara (Right)
       doc.text('Bendahara,', pageWidth - 70, finalY + 25);
       doc.text(`( ${settings.bendahara || '___________________'} )`, pageWidth - 70, finalY + 50);
     }
@@ -1501,10 +1479,9 @@
         income: inc,
         expense: exp,
         finalBalance: final,
-        finalFundBalances: {} // Simplified for Friday report
+        finalFundBalances: {}
       };
       
-      // Calculate totals for footer
       const tableData = {
         body: weekTrans.sort((a,b)=>new Date(a.date)-new Date(b.date)).map((t, i) => [
           i+1,
