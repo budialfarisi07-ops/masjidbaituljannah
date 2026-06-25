@@ -1361,6 +1361,30 @@
           styles: { fontSize: 9, halign: 'center', fontStyle: 'bold' },
           margin: { left: 14, right: 14 }
         });
+        
+        // Rincian Saldo Akhir Table (Vertical Single Column)
+        const breakdownEntries = Object.entries(financials.finalFundBalances).filter(([_, val]) => val !== 0);
+        if(breakdownEntries.length > 0) {
+           const rincianBody = breakdownEntries.map(([fundId, amount]) => {
+             let label = 'Umum / Tidak Teridentifikasi';
+             if(fundId !== 'general') {
+               const cat = categories.find(c => c.id === fundId);
+               if(cat) label = cat.name;
+             }
+             return [label, formatRupiah(amount)];
+           });
+           
+           doc.autoTable({
+             startY: doc.lastAutoTable.finalY + 10,
+             head: [['RINCIAN SALDO AKHIR PER AKAD / DANA', '']],
+             body: rincianBody,
+             theme: 'grid',
+             headStyles: { fillColor: [147, 51, 234], textColor: 255, halign: 'center', fontSize: 10 }, // Purple header
+             styles: { fontSize: 9 },
+             columnStyles: { 0: { cellWidth: 120 }, 1: { halign: 'right', fontStyle: 'bold' } },
+             margin: { left: 14, right: 14 }
+           });
+        }
       }
       
       // Table Headers based on type
@@ -1387,29 +1411,35 @@
         foot: tableData.foot ? [tableData.foot] : [],
         theme: 'grid',
         headStyles: { fillColor: [22, 163, 74], fontSize: 8 },
-        footStyles: { fillColor: [240, 253, 244], textColor: [0,0,0], fontStyle: 'bold' },
+        footStyles: { fillColor: [240, 253, 244], textColor: [0,0,0], fontStyle: 'bold', halign: 'right' },
         styles: { fontSize: 8, cellPadding: 2 },
-        columnStyles: colStyles
+        columnStyles: colStyles,
+        didParseCell: function(data) {
+            // Fix for footer text cutting off by ensuring row height
+            if (data.section === 'foot') {
+                data.cell.styles.minCellHeight = 8;
+            }
+        }
       });
       
       // Signature Footer
-      const finalY = doc.lastAutoTable.finalY + 15; // Reduced gap
+      const finalY = doc.lastAutoTable.finalY + 15; 
       const pageWidth = doc.internal.pageSize.width;
       const today = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
       
       doc.setFontSize(10);
       doc.setFont(undefined, 'normal');
-      // Use custom city from settings
       const city = settings.city || 'Kota';
       doc.text(`${city}, ${today}`, pageWidth/2, finalY, { align: 'center' });
       
+      // Increased vertical gap for signature space (Normal distance)
       // Ketua Takmir (Left)
-      doc.text('Ketua Takmir,', 30, finalY + 10); // Reduced gap (was 25)
-      doc.text(`( ${settings.ketua || '___________________'} )`, 30, finalY + 20); // Reduced gap (was 45)
+      doc.text('Ketua Takmir,', 30, finalY + 25); 
+      doc.text(`( ${settings.ketua || '___________________'} )`, 30, finalY + 50); 
       
       // Bendahara (Right)
-      doc.text('Bendahara,', pageWidth - 70, finalY + 10);
-      doc.text(`( ${settings.bendahara || '___________________'} )`, pageWidth - 70, finalY + 20);
+      doc.text('Bendahara,', pageWidth - 70, finalY + 25);
+      doc.text(`( ${settings.bendahara || '___________________'} )`, pageWidth - 70, finalY + 50);
     }
 
     function exportPDF() {
@@ -1418,7 +1448,6 @@
       const data = getFilteredData();
       const financials = calculateFinancials(data, document.getElementById('filterStartDate').value || '1900-01-01');
       
-      // Get exact dates for period label
       const startDate = document.getElementById('filterStartDate').value;
       const endDate = document.getElementById('filterEndDate').value;
       let periodLabel = 'Semua Periode';
@@ -1426,7 +1455,6 @@
         periodLabel = `${formatDateID(startDate)} - ${formatDateID(endDate)}`;
       }
       
-      // Calculate totals for footer
       const totalInc = data.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
       const totalExp = data.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
       
@@ -1461,7 +1489,6 @@
       const eStr = thu.toISOString().split('T')[0];
       const periodLabel = `${formatDateID(sStr)} - ${formatDateID(eStr)}`;
       
-      // Recalculate specifically for this week
       const prevTrans = transactions.filter(t => t.date < sStr);
       const initBal = prevTrans.reduce((s, t) => s + (t.type==='income'?t.amount:-t.amount), 0);
       const weekTrans = transactions.filter(t => t.date >= sStr && t.date <= eStr);
@@ -1473,9 +1500,11 @@
         initialBalanceTotal: initBal,
         income: inc,
         expense: exp,
-        finalBalance: final
+        finalBalance: final,
+        finalFundBalances: {} // Simplified for Friday report
       };
       
+      // Calculate totals for footer
       const tableData = {
         body: weekTrans.sort((a,b)=>new Date(a.date)-new Date(b.date)).map((t, i) => [
           i+1,
@@ -1483,7 +1512,8 @@
           t.description,
           t.type === 'income' ? formatRupiah(t.amount) : '-',
           t.type === 'expense' ? formatRupiah(t.amount) : '-'
-        ])
+        ]),
+        foot: ['TOTAL PEKAN', '', formatRupiah(inc), formatRupiah(exp)]
       };
       
       generatePDFContent(doc, 'LAPORAN PEKAN JUMAT', periodLabel, financials, tableData, true);
@@ -1493,7 +1523,6 @@
     // ==================== REKAP BULANAN LOGIC ====================
     function showRekapModal() {
       document.getElementById('rekapModal').classList.remove('hidden');
-      // Default to last 6 months
       const end = new Date();
       const start = new Date();
       start.setMonth(start.getMonth() - 6);
@@ -1526,10 +1555,8 @@
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       
-      // Filter transactions in range
       const data = transactions.filter(t => t.date >= startDate && t.date <= endDate);
       
-      // Group by Month-Year
       const monthlyData = {};
       data.forEach(t => {
         const d = new Date(t.date);
@@ -1541,7 +1568,6 @@
         else monthlyData[key].exp += t.amount;
       });
       
-      // Sort keys
       const sortedKeys = Object.keys(monthlyData).sort();
       
       let totalInc = 0, totalExp = 0;
@@ -1558,8 +1584,7 @@
       };
       
       const periodLabel = `${formatDateID(startDate)} - ${formatDateID(endDate)}`;
-      // Dummy financials for header consistency
-      const dummyFinancials = { initialBalanceTotal: 0, income: totalInc, expense: totalExp, finalBalance: 0 };
+      const dummyFinancials = { initialBalanceTotal: 0, income: totalInc, expense: totalExp, finalBalance: 0, finalFundBalances: {} };
       
       generatePDFContent(doc, 'REKAPITULASI LAPORAN BULANAN', periodLabel, dummyFinancials, tableData, false, true);
       doc.save(`Rekap_Bulanan_${settings.mosque_name}.pdf`);
@@ -1583,12 +1608,10 @@
         ['LAPORAN KEUANGAN BULANAN'],
         [`Periode: ${periodLabel}`],
         [],
-        // Summary Block matching PDF Table
         ['RINGKASAN KEUANGAN'],
         ['Saldo Awal', 'Total Pemasukan', 'Total Pengeluaran', 'Saldo Akhir'],
         [financials.initialBalanceTotal, financials.income, financials.expense, financials.finalBalance],
         [],
-        // Table Header
         ['No', 'Tanggal', 'Keterangan', 'Dana/Akad', 'Catatan', 'Pemasukan', 'Pengeluaran']
       ];
       
@@ -1611,10 +1634,8 @@
         ]);
       });
       
-      // Total Row
       ws_data.push(['', '', '', '', 'TOTAL', totalInc, totalExp]);
       
-      // Footer Signature Info
       const today = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
       const city = settings.city || 'Kota';
       
@@ -1629,7 +1650,6 @@
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.aoa_to_sheet(ws_data);
       
-      // Set column widths
       ws['!cols'] = [
         {wch: 5}, {wch: 12}, {wch: 30}, {wch: 20}, {wch: 20}, {wch: 15}, {wch: 15}
       ];
