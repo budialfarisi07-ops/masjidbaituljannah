@@ -1575,7 +1575,7 @@
       closeRekapModal();
     }
     
-    // FIX: Auto-generate Excel based on current filter and open GDrive for upload
+    // FIX: Generate Excel first, then open GDrive to avoid popup blockers
     function backupToGDrive() {
       const data = getFilteredData();
       const startDate = document.getElementById('filterStartDate').value;
@@ -1629,12 +1629,15 @@
       XLSX.utils.book_append_sheet(wb, ws, "Laporan");
       
       const fileName = `Backup_${settings.mosque_name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      
+      // Download Excel FIRST
       XLSX.writeFile(wb, fileName);
       
+      // THEN open Google Drive after a short delay
       setTimeout(() => {
         window.open('https://drive.google.com/drive/my-drive', '_blank');
         showToast('File Excel berhasil didownload. Silakan upload ke Google Drive.', 'info');
-      }, 1000);
+      }, 1500);
     }
     
     function downloadBackupJSON() {
