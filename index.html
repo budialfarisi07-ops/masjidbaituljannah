@@ -244,14 +244,30 @@
         
         <!-- Export Buttons -->
         <div class="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
-          <button onclick="exportPDF()" class="flex-1 md:flex-none px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg font-medium transition flex items-center justify-center gap-2 text-sm border border-red-100">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-            Cetak PDF
-          </button>
-          <button onclick="exportExcel()" class="flex-1 md:flex-none px-4 py-2 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg font-medium transition flex items-center justify-center gap-2 text-sm border border-green-100">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            Export Excel
-          </button>
+          <!-- Export Dropdown (PDF + Excel) -->
+          <div class="relative flex-1 md:flex-none">
+            <button onclick="toggleExportMenu()" class="w-full px-4 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg font-medium transition flex items-center justify-center gap-2 text-sm border border-amber-100">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              Export
+              <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            
+            <div id="exportMenu" class="hidden absolute top-full left-0 md:left-auto md:right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border z-50 overflow-hidden">
+              <div class="p-3 bg-gray-50 border-b">
+                <p class="text-xs font-bold text-gray-700">Pilih Format Export</p>
+              </div>
+              <div class="p-2 space-y-1">
+                <button onclick="exportPDF(); toggleExportMenu();" class="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-red-50 rounded flex items-center gap-2">
+                  <svg class="w-4 h-4 text-red-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                  Cetak PDF
+                </button>
+                <button onclick="exportExcel(); toggleExportMenu();" class="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-green-50 rounded flex items-center gap-2">
+                  <svg class="w-4 h-4 text-green-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  Export Excel
+                </button>
+              </div>
+            </div>
+          </div>
           <button onclick="showRekapModal()" class="flex-1 md:flex-none px-4 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg font-medium transition flex items-center justify-center gap-2 text-sm border border-purple-100">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             Rekap Bulanan
@@ -322,6 +338,15 @@
         <div class="p-4 border-b flex justify-between items-center">
           <h2 class="font-bold text-gray-800">Daftar Mutasi</h2>
           <span id="transactionCount" class="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-600">0 Data</span>
+        </div>
+        <div class="p-4 border-b bg-gray-50/50">
+          <div class="relative">
+            <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input type="text" id="transSearchInput" oninput="applyFilter()" placeholder="Cari keterangan, tanggal, bulan, atau tahun..." class="w-full pl-9 pr-9 py-2.5 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 text-sm outline-none">
+            <button onclick="document.getElementById('transSearchInput').value=''; applyFilter();" id="transSearchClear" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-sm text-left">
@@ -806,7 +831,7 @@
       ketua: 'H. Abdullah',
       bendahara: 'Umar Bakri'
     };
-    let currentFriday = new Date();
+    let currentFriday = getCurrentFriday();
     let chartInstances = {};
 
     // ==================== INITIALIZATION ====================
@@ -991,14 +1016,25 @@
       document.getElementById('backupMenu').classList.toggle('hidden');
     }
 
+    function toggleExportMenu() {
+      document.getElementById('exportMenu').classList.toggle('hidden');
+    }
+
     // ==================== CORE LOGIC ====================
     
+    function transactionSearchIndex(t) {
+      const d = new Date(t.date);
+      const fullDate = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+      return (t.description + ' ' + fullDate + ' ' + t.date).toLowerCase();
+    }
+
     function getFilteredData() {
       const type = document.getElementById('filterType').value;
       const catId = document.getElementById('filterCategory').value;
       const start = document.getElementById('filterStartDate').value;
       const end = document.getElementById('filterEndDate').value;
       const order = document.getElementById('sortOrder').value;
+      const search = (document.getElementById('transSearchInput')?.value || '').trim().toLowerCase();
       
       let data = [...transactions];
       
@@ -1006,6 +1042,7 @@
       if (catId) data = data.filter(t => t.category_id === catId);
       if (start) data = data.filter(t => t.date >= start);
       if (end) data = data.filter(t => t.date <= end);
+      if (search) data = data.filter(t => transactionSearchIndex(t).includes(search));
       
       data.sort((a, b) => {
         return order === 'asc' ? new Date(a.date) - new Date(b.date) : new Date(b.date) - new Date(a.date);
@@ -1044,6 +1081,12 @@
     }
     
     function applyFilter() {
+      const searchInput = document.getElementById('transSearchInput');
+      const clearBtn = document.getElementById('transSearchClear');
+      if (searchInput && clearBtn) {
+        clearBtn.classList.toggle('hidden', searchInput.value.length === 0);
+      }
+      
       const data = getFilteredData();
       const startDate = document.getElementById('filterStartDate').value || '1900-01-01';
       
@@ -1626,6 +1669,13 @@
     }
 
     // ==================== FRIDAY REPORT ====================
+    function toLocalDateStr(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
     function getCurrentFriday() {
       const d = new Date();
       const day = d.getDay();
@@ -1639,8 +1689,8 @@
       const thu = new Date(currentFriday);
       thu.setDate(fri.getDate() + 6);
       
-      const sStr = fri.toISOString().split('T')[0];
-      const eStr = thu.toISOString().split('T')[0];
+      const sStr = toLocalDateStr(fri);
+      const eStr = toLocalDateStr(thu);
       
       document.getElementById('weekLabel').textContent = `${formatDateID(sStr)} - ${formatDateID(eStr)}`;
       
@@ -1870,8 +1920,8 @@
       const fri = new Date(currentFriday);
       const thu = new Date(currentFriday);
       thu.setDate(fri.getDate() + 6);
-      const sStr = fri.toISOString().split('T')[0];
-      const eStr = thu.toISOString().split('T')[0];
+      const sStr = toLocalDateStr(fri);
+      const eStr = toLocalDateStr(thu);
       
       // Use Full Period Label with Year and Day Name
       const periodLabel = formatPeriodLabelFull(sStr, eStr);
